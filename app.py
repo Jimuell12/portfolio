@@ -44,7 +44,7 @@ def login():
         userDetails = users.query.filter_by(email=email).first()
 
         if userDetails:
-            # If userDetails is not None, check the password
+            # If userDetails is not None, check the password 
             if bcrypt.check_password_hash(userDetails.password, password):
                 # Store user attributes in session
                 session['user'] = {
@@ -57,7 +57,9 @@ def login():
                     session.permanent = True
                     app.permanent_session_lifetime = timedelta(days=120)
                 return redirect(url_for('index'))
-        
+        else:
+            flash('No account was found in our system')
+            return redirect(url_for('login'))
         # If user details are not found or password check fails, show error
         flash('Invalid email or password')
         return redirect(url_for('login'))
