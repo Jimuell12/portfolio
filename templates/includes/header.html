@@ -1,0 +1,33 @@
+<header>
+    <nav class=" border-gray-200  drop-shadow-md shadow-black">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+            <a href="{{ url_for('index') }}" class="flex items-center space-x-3 rtl:space-x-reverse">
+                <!-- <img src="https://png.pngtree.com/png-vector/20190630/ourmid/pngtree-portfolio-icon-in-trendy-style-isolated-background-png-image_1524092.jpg" class="h-8" alt="Flowbite Logo" /> -->
+                <span class="self-center text-2xl p-4 font-semibold whitespace-nowrap text-white">P O R T F O L I O</span>
+            </a>
+            <div class="flex items-center md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
+                <button type="button" class="flex text-sm bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom">
+                <span class="sr-only">Open user menu</span>
+                <img class="w-8 h-8 rounded-full self-center" src="https://t3.ftcdn.net/jpg/05/53/79/60/360_F_553796090_XHrE6R9jwmBJUMo9HKl41hyHJ5gqt9oz.jpg" alt="user photo">
+                </button>
+                <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow" id="user-dropdown">
+                <div class="px-4 py-3">
+                    <span class="block text-sm text-gray-900">{{ user.name }}</span>
+                    <span class="block text-sm  text-gray-500 truncate">{{ user.email }}</span>
+                </div>
+                <ul class="py-2" aria-labelledby="user-menu-button">
+                    <li>
+                        <a href="{{ url_for('index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Portfolio</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('history') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">History</a>
+                    </li>
+                    <li>
+                    <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
+                    </li>
+                </ul>
+                </div>
+            </div>
+        </div>
+    </nav>  
+</header>

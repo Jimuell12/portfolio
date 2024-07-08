@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% with message = get_flashed_messages(with_categories=true) %}
+    {% if message %}
+        {% include 'components/banner.html' %}
+    {% endif %}
+{% endwith %}
+
+{% block title %}History{% endblock %}
+
+{% block content %}
+{% include 'includes/header.html' %}
+    <div class="grid lg:grid-cols-6 p-2 lg:p-8 gap-5">
+        <div class="p-3 lg:col-span-2 bg-white rounded-lg shadow md:p-6 relative -z-10 lg:z-0">
+            <div class="absolute p-3 top-0 left-0">
+                <h5 class="leading-none text-base font-bold text-gray-900 dark:text-white pb-2">{{ total_counts }}</h5>
+                <p class="text-xs font-normal text-gray-500 dark:text-gray-400">Users Sign Ups</p>
+            </div>
+            <div id="area-chart" class="relative"></div>
+        </div>
+        <div class="lg:col-span-4 bg-white rounded-lg shadow p-3">
+            <h1><strong>User Lists</strong></h1>
+            <hr>
+            <div class=" w-full h-[411px] overflow-y-scroll">
+                <table class="text-[0.5rem] lg:text-xs w-full table-auto">
+                    <thead>
+                        <tr>
+                            <th class="text-left p-2 border-solid border-[1px]">ID</th>
+                            <th class="text-right p-2 border-solid border-[1px]">Name</th>
+                            <th class="text-right p-2 border-solid border-[1px]">Date Added</th>
+                            <th class="text-right p-2 border-solid border-[1px]">Email</th>
+                        </tr>
+                    </thead>
+                    <tbody class="overflow-y-scroll">
+                        {% for detail in users %}
+                            <tr>
+                                <td class="text-left p-2 border-solid border-[1px]">{{ detail.id }}</td>
+                                <td class="text-right p-2 border-solid border-[1px]">{{ detail.name }}</td>
+                                <td class="text-right p-2 border-solid border-[1px]">{{ detail.created_at }}</td>
+                                <td class="text-right p-2 border-solid border-[1px]">{{ detail.email }}</td>
+
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userCounts = {{ user_counts|tojson }};
+        console.log(userCounts);
+
+        const dates = userCounts.map(item => item.date);
+        const counts = userCounts.map(item => item.count);
+
+        const options = {
+        chart: {
+            height: "100%",
+            maxWidth: "100%",
+            type: "area",
+            fontFamily: "Inter, sans-serif",
+            dropShadow: {
+            enabled: false,
+            },
+            toolbar: {
+            show: false,
+            },
+        },
+        tooltip: {
+            enabled: true,
+            x: {
+            show: false,
+            },
+        },
+        fill: {
+            type: "gradient",
+            gradient: {
+            opacityFrom: 0.55,
+            opacityTo: 0,
+            shade: "#1C64F2",
+            gradientToColors: ["#1C64F2"],
+            },
+        },
+        dataLabels: {
+            enabled: true,
+        },
+        stroke: {
+            width: 6,
+        },
+        grid: {
+            show: true,
+            strokeDashArray: 4,
+            padding: {
+            left: 2,
+            right: 2,
+            top: 0
+            },
+        },
+        series: [
+            {
+            name: "User Sign Ups",
+            data: counts,
+            color: "#1A56DB",
+            },
+        ],
+        xaxis: {
+            type: 'datetime',
+            categories: dates,
+            labels: {
+            show: true,
+            },
+            axisBorder: {
+            show: false,
+            },
+            axisTicks: {
+            show: false,
+            },
+        },
+        yaxis: {
+            show: false,
+        },
+        }
+
+    if (document.getElementById("area-chart") && typeof ApexCharts !== 'undefined') {
+    const chart = new ApexCharts(document.getElementById("area-chart"), options);
+    chart.render();
+    }
+
+
+    </script>
+
+{% endblock %}
