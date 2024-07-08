@@ -10,6 +10,7 @@ app.config['SECRET_KEY'] = secrets.token_hex(16)
 
 # Configure SQLAlchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost/portfolio'
+# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+mysqlconnector://jimuell12:portfolio@jimuell12.mysql.pythonanywhere-services.com/jimuell12$portfolio"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
