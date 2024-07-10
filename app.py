@@ -1,21 +1,34 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from flask_bcrypt import Bcrypt
 import secrets
 from datetime import timedelta, datetime
+from flask_mail import Mail, Message
+from cryptography.fernet import Fernet
+import base64
 
 app = Flask(__name__)
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USERNAME'] = 'showcasestudent2@gmail.com'
+app.config['MAIL_PASSWORD'] = 'mebw sqjw nvdg ydhb'
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+
+mail = Mail(app)
+
+cipher_key = b'mQTigr-git4dy0YBQpEoC09k7xRkMEXvi3-WxvrGgsA='
+cipher = Fernet(cipher_key)
+
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 
-# Configure SQLAlchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost/portfolio'
 # app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+mysqlconnector://jimuell12:portfolio@jimuell12.mysql.pythonanywhere-services.com/jimuell12$portfolio"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
-# Define the User model
 class users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -23,14 +36,73 @@ class users(db.Model):
     password = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.current_timestamp())
 
-# Routes
-
 @app.route('/')
 def index():
     if 'user' not in session:
         return redirect(url_for('login'))
     user = session['user']
     return render_template('index.html', user=user)
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email']
+        userDetails = users.query.filter_by(email=email).first()
+
+        if userDetails:
+            encrypted_email = cipher.encrypt(email.encode())
+            reset_link = url_for('reset_password', token=base64.urlsafe_b64encode(encrypted_email).decode(), _external=True)
+            print(reset_link)
+            msg = Message(
+                subject='Forgot Password Reset!', 
+                sender='StudentShowcase@gmail.com',
+                recipients=[userDetails.email]
+            )
+            msg.html = f"""
+                <html>
+                    <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+                        <h1 style="color: #333;">Password Reset Request</h1>
+                        <p>Hello,</p>
+                        <p>We received a request to reset your password. If you did not make this request, you can ignore this email.</p>
+                        <p>To reset your password, click the link below:</p>
+                        <p>
+                            <a href="{reset_link}" style="display: inline-block; padding: 10px 20px; color: #fff; background-color: #007BFF; text-decoration: none; border-radius: 5px;">Reset Password</a>
+                        </p>
+                        <p>If the above button doesn't work, copy and paste the following link into your web browser:</p>
+                        <p><a href="{reset_link}">{reset_link}</a></p>
+                        <p>Thank you,<br/>The Student Showcase Team</p>
+                    </body>
+                </html>
+            """
+            mail.send(msg)
+
+            flash('Password reset link was sent!', 'success')
+            return redirect(url_for('forgot_password'))
+        else:
+            flash('This email is not in our system!', 'error')
+            redirect(url_for('forgot_password'))
+
+    return render_template('forgot.html')
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    try:
+        decrypted_token = base64.urlsafe_b64decode(token.encode())
+        email = cipher.decrypt(decrypted_token).decode()
+    except:
+        return 'The reset link is invalid.'
+
+    if request.method == 'POST':
+        new_password = request.form['password']
+        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        user = users.query.filter_by(email=email).first()
+        user.password = hashed_password
+        db.session.commit()
+
+        flash('Password reset successfully!', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('reset.html', token=token)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -41,13 +113,10 @@ def login():
         password = request.form['password']
         remember = request.form.get('remember')
         
-        # Query the database for the user with the provided email
         userDetails = users.query.filter_by(email=email).first()
 
         if userDetails:
-            # If userDetails is not None, check the password 
             if bcrypt.check_password_hash(userDetails.password, password):
-                # Store user attributes in session
                 session['user'] = {
                     'id': userDetails.id,
                     'name': userDetails.name,
@@ -59,10 +128,10 @@ def login():
                     app.permanent_session_lifetime = timedelta(days=120)
                 return redirect(url_for('index'))
         else:
-            flash('No account was found in our system')
+            flash('No account was found in our system', 'error')
             return redirect(url_for('login'))
-        # If user details are not found or password check fails, show error
-        flash('Invalid email or password')
+
+        flash('Invalid email or password', 'error')
         return redirect(url_for('login'))
     
     return render_template('login.html')
